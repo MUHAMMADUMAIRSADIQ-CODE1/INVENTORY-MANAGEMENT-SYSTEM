@@ -6,6 +6,8 @@ import connectDB from "./config/db.js";
 import productRoutes from "./routes/productRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 dotenv.config();
+console.log("MONGO_URI:", process.env.MONGO_URI);
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 connectDB();
 const app = express();
 
