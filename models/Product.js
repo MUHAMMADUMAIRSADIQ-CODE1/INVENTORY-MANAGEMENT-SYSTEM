@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+const getStatusFromQuantity = (quantity, lowStockLimit) => {
+  if (quantity <= 0) return "Out Of Stock";
+  if (quantity <= lowStockLimit) return "Low Stock";
+  return "In Stock";
+};
+
 const productSchema = new mongoose.Schema(
   {
     productName: {
@@ -27,10 +33,21 @@ const productSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true,
+      min: [0, "Price must be greater than or equal to 0"],
     },
     quantity: {
       type: Number,
       required: true,
+      min: [0, "Quantity cannot be negative"],
+    },
+    lowStockLimit: {
+      type: Number,
+      default: 10,
+      min: [0, "Low stock limit cannot be negative"],
+    },
+    status: {
+      type: String,
+      default: "In Stock",
     },
     supplier: {
       type: String,

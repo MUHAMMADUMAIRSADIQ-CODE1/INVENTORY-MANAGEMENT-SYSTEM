@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import connectDB from "./config/db.js";
 import productRoutes from "./routes/productRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import saleRoutes from "./routes/saleRoutes.js";
 dotenv.config();
 console.log("MONGO_URI:", process.env.MONGO_URI);
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/sales", saleRoutes);
 app.get("/", (req, res) => {
   res.send("Inventory Management API is Running...");
 });

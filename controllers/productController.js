@@ -1,5 +1,11 @@
 import Product from "../models/Product.js";
 
+const getStatusFromQuantity = (quantity, lowStockLimit) => {
+    if (quantity <= 0) return "Out Of Stock";
+    if (quantity <= lowStockLimit) return "Low Stock";
+    return "In Stock";
+};
+
 export const addProduct = async (req, res) => {
     try {
         const {
@@ -10,6 +16,7 @@ export const addProduct = async (req, res) => {
             price,
             quantity,
             supplier,
+            lowStockLimit,
         } = req.body;
 
         if (
@@ -26,14 +33,16 @@ export const addProduct = async (req, res) => {
             });
         }
 
-        if (price < 0 || quantity < 0) {
+        if (price < 0 || quantity < 0 || lowStockLimit < 0) {
             return res.status(400).json({
-                message: "Price and Quantity must be greater than or equal to 0",
+                message: "Price, Quantity, and Low Stock Limit must be greater than or equal to 0",
             });
         }
+
         const product = await Product.create({
             ...req.body,
             user: req.user.id,
+            status: getStatusFromQuantity(Number(quantity), Number(lowStockLimit || 10)),
         });
 
         res.status(201).json({
@@ -83,22 +92,53 @@ export const getProduct = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
     try {
+        const { price, quantity, lowStockLimit } = req.body;
+
+        if (price !== undefined && price < 0) {
+            return res.status(400).json({
+                message: "Price cannot be negative",
+            });
+        }
+
+        if (quantity !== undefined && quantity < 0) {
+            return res.status(400).json({
+                message: "Quantity cannot be negative",
+            });
+        }
+
+        if (lowStockLimit !== undefined && lowStockLimit < 0) {
+            return res.status(400).json({
+                message: "Low stock limit cannot be negative",
+            });
+        }
+
+        const existingProduct = await Product.findOne({
+            _id: req.params.id,
+            user: req.user.id,
+        });
+
+        if (!existingProduct) {
+            return res.status(404).json({
+                message: "Product not found",
+            });
+        }
+
+        const nextQuantity = quantity !== undefined ? Number(quantity) : existingProduct.quantity;
+        const nextLowStockLimit = lowStockLimit !== undefined ? Number(lowStockLimit) : existingProduct.lowStockLimit || 10;
+
         const product = await Product.findOneAndUpdate(
             {
                 _id: req.params.id,
                 user: req.user.id,
             },
-            req.body,
+            {
+                ...req.body,
+                status: getStatusFromQuantity(nextQuantity, nextLowStockLimit),
+            },
             {
                 new: true,
             }
         );
-
-        if (!product) {
-            return res.status(404).json({
-                message: "Product not found",
-            });
-        }
 
         res.json({
             message: "Product Updated Successfully",
